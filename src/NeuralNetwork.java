@@ -95,6 +95,55 @@ public class NeuralNetwork {
         }
         return clone;
     }
+
+    @Override
+    public String toString() {
+        return "NeuralNetwork [inputSize=" + inputSize + ", outputSize=" + outputSize + ", middleLayers=" + middleLayers
+                + ", middleWeights=" + Arrays.toString(middleWeights) + ", outputWeights="
+                + Arrays.toString(outputWeights) + ", fitness=" + fitness + "]";
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + inputSize;
+        result = prime * result + outputSize;
+        result = prime * result + middleLayers;
+        result = prime * result + Arrays.deepHashCode(middleWeights);
+        result = prime * result + Arrays.deepHashCode(outputWeights);
+        long temp;
+        temp = Double.doubleToLongBits(fitness);
+        result = prime * result + (int) (temp ^ (temp >>> 32));
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        NeuralNetwork other = (NeuralNetwork) obj;
+        if (inputSize != other.inputSize)
+            return false;
+        if (outputSize != other.outputSize)
+            return false;
+        if (middleLayers != other.middleLayers)
+            return false;
+        if (!Arrays.deepEquals(middleWeights, other.middleWeights))
+            return false;
+        if (!Arrays.deepEquals(outputWeights, other.outputWeights))
+            return false;
+        if (Double.doubleToLongBits(fitness) != Double.doubleToLongBits(other.fitness))
+            return false;
+        return true;
+    }
+
+
+    
 }
 
 
