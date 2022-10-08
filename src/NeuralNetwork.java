@@ -8,18 +8,32 @@ public class NeuralNetwork {
     private double[][] outputWeights;
     private double fitness;
 
-    public NeuralNetwork(int inputSize, int outputSize, int middleLayers) {
+
+    public NeuralNetwork(int inputSize, int outputSize, int layerCount) {
+        this(inputSize, outputSize, layerCount, true);
+    }
+
+    private NeuralNetwork(int inputSize, int outputSize, int layerCount, boolean randomize) {
         this.inputSize = inputSize;
         this.outputSize = outputSize;
-        this.middleLayers = middleLayers;
+        this.middleLayers = layerCount - 2;
         middleWeights = new double[middleLayers][inputSize][inputSize];
         outputWeights = new double[outputSize][inputSize];
         fitness = 0;
-        generateRandomWeights();
+        if(randomize) {
+            generateRandomWeights();
+        }
+        
     }
 
     private void generateRandomWeights() {
-
+        for(double[][] layerWeights : middleWeights) {
+            for(double[] nueronWeights : layerWeights) {
+                for(int weightIndex = 0; weightIndex < nueronWeights.length; weightIndex++) {
+                    nueronWeights[weightIndex] = Math.random() * 2 - 1;
+                }
+            }
+        }
     }
 
     public double[] run(double[] input) {
@@ -47,7 +61,6 @@ public class NeuralNetwork {
         return output;
     }
 
-
     public NeuralNetwork mutate(double strength, double probability) {
         NeuralNetwork clone = clone();
         for(double[][] layerWeights : clone.middleWeights) {
@@ -71,7 +84,7 @@ public class NeuralNetwork {
     }
     
     public NeuralNetwork clone() {
-        NeuralNetwork clone = new NeuralNetwork(inputSize, outputSize, middleLayers);
+        NeuralNetwork clone = new NeuralNetwork(inputSize, outputSize, middleLayers, false);
         for(int layerIndex = 0; layerIndex < middleLayers; layerIndex++) {
             for(int neuronIndex = 0; neuronIndex < inputSize; neuronIndex++) {
                 clone.middleWeights[layerIndex][neuronIndex] = Arrays.copyOf(middleWeights[layerIndex][neuronIndex], inputSize);

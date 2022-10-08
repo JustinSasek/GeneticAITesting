@@ -9,12 +9,12 @@ public class EvolutionPath {
     private NeuralNetwork[] population;
     private int inputSize;
     private int outputSize;
-    private int middleLayers;
+    private int layerCount;
 
 
     public EvolutionPath(double mutationStrength, double mutationProbability, double selectionFactor,
             double genetricDriftFactor, int populationSize,
-            int inputSize, int outputSize, int middleLayers) {
+            int inputSize, int outputSize, int layerCount) {
         this.mutationStrength = mutationStrength;
         this.mutationProbability = mutationProbability;
         this.selectionFactor = selectionFactor;
@@ -22,7 +22,7 @@ public class EvolutionPath {
         this.populationSize = populationSize;
         this.inputSize = inputSize;
         this.outputSize = outputSize;
-        this.middleLayers = middleLayers;
+        this.layerCount = layerCount;
     }
 
     private void init() {
@@ -70,7 +70,7 @@ public class EvolutionPath {
             population[i] = parents[parentIndex].mutate(mutationStrength, mutationProbability);
         }
         for(int i = geneticDriftCutoff; i < populationSize; i++) {
-            population[i] = new NeuralNetwork(inputSize, outputSize, middleLayers);
+            population[i] = new NeuralNetwork(inputSize, outputSize, layerCount);
         }
     }
     

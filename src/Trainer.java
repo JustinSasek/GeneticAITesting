@@ -1,38 +1,65 @@
+import javax.swing.KeyStroke;
+
 public class Trainer {
     private Trainable trainee;
+
     private double[] mutationStrength;
+    private double bestMutationStrength;
+
     private double[] mutationProbability;
+    private double bestMutationProbability;
+
     private double[] selectionFactor;
+    private double bestSelectionFactor;
+
     private double[] genetricDriftFactor;
-    private int populationSize;
+    private double bestGenetricDriftFactor;
+
+    private int populationSize = 500;
     private int inputSize;
     private int outputSize;
-    private int middleLayers;
+    private int layerCount;
     private int runTime; //sec
-    private int tuningFactor; //percentage of total time
+    private final static double tuningFactor = 0.05; //percentage of total time
+    private EvolutionPath mainEvolutionPath;
 
-    public Trainer(Trainable trainee, int populationSize, int inputSize, int outputSize, int middleLayers,
-            int runTime, int tuningFactor) {
-        this(new double[]{.05,0.2}, new double[]{0.05, 0.15}, new double[]{0.05, 0.25}, new double[]{0.05, 0.4}, populationSize, inputSize, outputSize, middleLayers,
-     runTime, tuningFactor);
-    }
+    private boolean running = false;
+    
 
-    public Trainer(double[] mutationStrength, double[] mutationProbability, double[] selectionFactor,
-            double[] genetricDriftFactor, int populationSize, int inputSize, int outputSize, int middleLayers,
-            int runTime, int tuningFactor) {
-        this.mutationStrength = mutationStrength;
-        this.mutationProbability = mutationProbability;
-        this.selectionFactor = selectionFactor;
-        this.genetricDriftFactor = genetricDriftFactor;
-        this.populationSize = populationSize;
-        this.inputSize = inputSize;
+    public Trainer(Trainable trainee, int outputSize, int layerCount) {
+     this.mutationStrength = new double[]{.05,0.2};
+        this.mutationProbability = new double[]{0.05, 0.15};
+        this.selectionFactor = new double[]{0.05, 0.25};
+        this.genetricDriftFactor = new double[]{0.05, 0.4};
         this.outputSize = outputSize;
-        this.middleLayers = middleLayers;
-        this.runTime = runTime;
-        this.tuningFactor = tuningFactor;
+        this.layerCount = layerCount;
+
+        mainEvolutionPath = new EvolutionPath(bestMutationStrength, bestMutationProbability, 
+                bestSelectionFactor, bestGenetricDriftFactor, populationSize, inputSize, outputSize, layerCount);
     }
 
-    private void 
+    private void tune() {
+        bestMutationStrength = (mutationStrength[1] - mutationStrength[0]) / 2;
+        bestMutationProbability = (mutationProbability[1] - mutationProbability[0]) / 2;
+        bestSelectionFactor = (selectionFactor[1] - selectionFactor[0]) / 2;
+        bestGenetricDriftFactor = (genetricDriftFactor[1] - genetricDriftFactor[0]) / 2;
 
+        for(double ms = mutationStrength[0]; ms <= mutationStrength[1]; ms += (mutationStrength[1] - mutationStrength[0]) / 20)
+        mainEvolutionPath = new EvolutionPath(bestMutationStrength, bestMutationProbability, 
+                bestSelectionFactor, bestGenetricDriftFactor, populationSize, inputSize, outputSize, layerCount);
+    }
+
+    public void start() {
+        
+    }
+
+    private void checkIfEnded() {
+        
+        running = false;
+    }
+
+    public NeuralNetwork getBestNetwork() {
+        return null;
+    }
     
 }
