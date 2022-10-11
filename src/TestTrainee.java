@@ -5,27 +5,24 @@ public class TestTrainee implements Trainable {
     
 
     public TestTrainee() {
-        inputs = new double[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-        expectedOutput = new double[]{6.4, 3.7, 8.6, 2.6};
+        inputs = new double[] {1, 12, 3.5, 4, 5, 3, 7, 8, 9, 10};
+        expectedOutput = new double[]{6.4, 3.7, 8.6, 2.6, 5, 8, 2, 4.5, 6, 8};
     }
 
     @Override
-    public double calculateFitness(double[] output) {
+    public double calculateFitness(NeuralNetwork nn) {
         double fitness = 0;
-        for (int i = 0; i < output.length; i++) {
-            fitness -= Math.abs(expectedOutput[i] - output[i]);
+        for (int i = 0; i < inputs.length; i++) {
+            double output = nn.run(new double[]{inputs[i]})[0];
+            fitness -= Math.abs(expectedOutput[i] - output);
         }
         return fitness;
     }
 
-    @Override
-    public double[] getInputs() {
-        return inputs;
-    }
 
     @Override
     public int getOutputSize() {
-        return expectedOutput.length;
+        return 1;
     }
     
 }

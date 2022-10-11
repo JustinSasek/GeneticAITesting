@@ -1,5 +1,4 @@
 import java.util.Arrays;
-import java.util.Scanner;
 
 public class Trainer {
     private Trainable trainee;
@@ -13,39 +12,36 @@ public class Trainer {
     private double[] genetricDriftFactor;
 
     private static final int populationSize = 500;
-    private int inputSize;
-    private int outputSize;
-    private int layerCount;
-    private final static double tuningFactor = 0.05; // percentage of total time
-    private final static double tuningDuration = 30; // percentage of total time // sec
+    private final static double trainDuration = 50; // sec
+    private final static double tuningDuration = 10; // tuning time // sec
     private EvolutionPath mainEvolutionPath;
 
-    private Scanner input;
     private boolean running;
 
-    public Trainer(Trainable trainee, int layerCount) {
-        this.mutationStrength = new double[] { .05, 0.2 };
-        this.mutationProbability = new double[] { 0.05, 0.15 };
-        this.selectionFactor = new double[] { 0.05, 0.25 };
-        this.genetricDriftFactor = new double[] { 0.05, 0.4 };
-        this.outputSize = trainee.getOutputSize();
-        this.layerCount = layerCount;
-        input = new Scanner(System.in);
+    public Trainer(Trainable trainee, int height) {
+        this(trainee, height, -1);
+    }
 
-        mainEvolutionPath = new EvolutionPath(populationSize, inputSize, outputSize, layerCount,
+    public Trainer(Trainable trainee, int height, int width) {
+        this.mutationStrength = new double[] { .05, 0.1 };
+        this.mutationProbability = new double[] { 0.05, 0.1 };
+        this.selectionFactor = new double[] { 0.01, 0.25 };
+        this.genetricDriftFactor = new double[] { 0.5, 0.9 };
+        mainEvolutionPath = new EvolutionPath(populationSize, height, width,
                 trainee);
     }
 
     private void tune() {
+        System.out.println("Tuning started");
         mainEvolutionPath.setMutationStrength((mutationStrength[1] - mutationStrength[0]) / 2);
         mainEvolutionPath.setMutationProbability((mutationProbability[1] - mutationProbability[0]) / 2);
         mainEvolutionPath.setSelectionFactor((selectionFactor[1] - selectionFactor[0]) / 2);
         mainEvolutionPath.setGenetricDriftFactor((genetricDriftFactor[1] - genetricDriftFactor[0]) / 2);
 
-        long pathRuntime = (long) (tuningDuration / 4 / 20) * 1000000000;
+        long pathRuntime =  (long) tuningDuration * 1000000000 / 4 / 20 ;
         EvolutionPath bestPath = mainEvolutionPath.clone();
 
-        double maxFitness = Double.MIN_VALUE;
+        double maxFitness = Double.NEGATIVE_INFINITY;
         for (double ms = mutationStrength[0]; running && ms <= mutationStrength[1]; ms += (mutationStrength[1]
                 - mutationStrength[0]) / 20) {
             EvolutionPath tempPath = bestPath.clone();
@@ -60,9 +56,11 @@ public class Trainer {
                 maxFitness = relMaxfitness;
                 bestPath = tempPath;
             }
+            System.out.print("Tuning mutation strength - Best is: " + bestPath.getMutationStrength() + "          \r");
         }
+        System.out.println();
 
-        maxFitness = Double.MIN_VALUE;
+        maxFitness = Double.NEGATIVE_INFINITY;
         for (double mp = mutationProbability[0]; running && mp <= mutationProbability[1]; mp += (mutationProbability[1]
                 - mutationProbability[0]) / 20) {
             EvolutionPath tempPath = bestPath.clone();
@@ -77,9 +75,11 @@ public class Trainer {
                 maxFitness = relMaxfitness;
                 bestPath = tempPath;
             }
+            System.out.print("Tuning mutation prob - Best is: " + bestPath.getMutationProbability() + "          \r");
         }
+        System.out.println();
 
-        maxFitness = Double.MIN_VALUE;
+        maxFitness = Double.NEGATIVE_INFINITY;
         for (double sf = selectionFactor[0]; running && sf <= selectionFactor[1]; sf += (selectionFactor[1]
                 - selectionFactor[0]) / 20) {
             EvolutionPath tempPath = bestPath.clone();
@@ -94,9 +94,11 @@ public class Trainer {
                 maxFitness = relMaxfitness;
                 bestPath = tempPath;
             }
+            System.out.print("Tuning selection factor - Best is: " + bestPath.getSelectionFactor() + "          \r");
         }
+        System.out.println();
 
-        maxFitness = Double.MIN_VALUE;
+        maxFitness = Double.NEGATIVE_INFINITY;
         for (double gd = genetricDriftFactor[0]; running && gd <= genetricDriftFactor[1]; gd += (genetricDriftFactor[1]
                 - genetricDriftFactor[0]) / 20) {
             EvolutionPath tempPath = bestPath.clone();
@@ -111,17 +113,27 @@ public class Trainer {
                 maxFitness = relMaxfitness;
                 bestPath = tempPath;
             }
+            System.out.print("Tuning genetic drift - Best is: " + bestPath.getGenetricDriftFactor() + "          \r");
         }
+        System.out.println();
 
-        mainEvolutionPath = bestPath;
+        if (maxFitness > mainEvolutionPath.getMaxFitness()) {
+            mainEvolutionPath = bestPath;
+        }
+        System.out.println("Finished tuning");
     }
 
     private void train() {
-        long trainingDuration = (long) (tuningDuration / tuningFactor * (1 - tuningFactor)) * 1000000000;
+        long trainingDuration = (long) trainDuration * 1000000000;
         long startTime = System.nanoTime();
         while (running() && System.nanoTime() - startTime <= trainingDuration) {
             mainEvolutionPath.runGeneration();
+            System.out.print("Training gen " + mainEvolutionPath.getGenerationCount() + " - Best fitness is: " + mainEvolutionPath.getMaxFitness() + "          \r");
+            // if(mainEvolutionPath.getGenerationCount() % 100 == 0) {
+            //     System.out.println(mainEvolutionPath.getBestNetwork());
+            // }
         }
+        System.out.println();
     }
 
     public void run() {
@@ -136,9 +148,14 @@ public class Trainer {
         if (!running) {
             return false;
         }
-        if (input.hasNext()) {
-            running = false;
-            return false;
+
+        try {
+            if(System.in.available() != 0) {
+                running = false;
+                return false;
+            }
+        } 
+        catch (Exception e) {
         }
         return true;
     }
@@ -156,9 +173,6 @@ public class Trainer {
         result = prime * result + Arrays.hashCode(mutationProbability);
         result = prime * result + Arrays.hashCode(selectionFactor);
         result = prime * result + Arrays.hashCode(genetricDriftFactor);
-        result = prime * result + inputSize;
-        result = prime * result + outputSize;
-        result = prime * result + layerCount;
         result = prime * result + ((mainEvolutionPath == null) ? 0 : mainEvolutionPath.hashCode());
         return result;
     }
@@ -185,12 +199,6 @@ public class Trainer {
             return false;
         if (!Arrays.equals(genetricDriftFactor, other.genetricDriftFactor))
             return false;
-        if (inputSize != other.inputSize)
-            return false;
-        if (outputSize != other.outputSize)
-            return false;
-        if (layerCount != other.layerCount)
-            return false;
         if (mainEvolutionPath == null) {
             if (other.mainEvolutionPath != null)
                 return false;
@@ -204,7 +212,7 @@ public class Trainer {
         return "Trainer [trainee=" + trainee + ", mutationStrength=" + Arrays.toString(mutationStrength)
                 + ", mutationProbability=" + Arrays.toString(mutationProbability) + ", selectionFactor="
                 + Arrays.toString(selectionFactor) + ", genetricDriftFactor=" + Arrays.toString(genetricDriftFactor)
-                + ", inputSize=" + inputSize + ", outputSize=" + outputSize + ", layerCount=" + layerCount + "]";
+                + "]";
     }
 
 }

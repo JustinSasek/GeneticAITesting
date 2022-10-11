@@ -1,5 +1,4 @@
 public interface Trainable {
-    public double calculateFitness(double[] output);
-    public double[] getInputs();
+    public double calculateFitness(NeuralNetwork nn);
     public int getOutputSize();
 }

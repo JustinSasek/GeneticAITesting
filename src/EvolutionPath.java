@@ -1,7 +1,3 @@
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.util.Arrays;
 
 public class EvolutionPath {
@@ -11,56 +7,54 @@ public class EvolutionPath {
     private double genetricDriftFactor;
     private int populationSize;
     private NeuralNetwork[] population;
-    private int inputSize;
     private int outputSize;
-    private int layerCount;
+    private int height;
+    private int width;
     private Trainable trainee;
+    private int generationCount;
 
-    public EvolutionPath(int populationSize,
-            int inputSize, int outputSize, int layerCount, Trainable trainee, String filename) {
-        this.inputSize = inputSize;
-        this.outputSize = outputSize;
-        this.layerCount = layerCount;
+    public EvolutionPath(int populationSize, int height, int width, Trainable trainee,
+            NeuralNetwork seed) {
+
+        this.outputSize = trainee.getOutputSize();
+        this.height = height;
+        this.width = width;
         this.trainee = trainee;
-        initFromFile(filename);
+        generationCount = 0;
+        initFromSeed(seed);
+
     }
 
-    public EvolutionPath(int populationSize,
-            int inputSize, int outputSize, int layerCount, Trainable trainee) {
+    public EvolutionPath(int populationSize, int height, int width, Trainable trainee) {
         this.populationSize = populationSize;
-        this.inputSize = inputSize;
-        this.outputSize = outputSize;
-        this.layerCount = layerCount;
+        this.outputSize = trainee.getOutputSize();
+        this.height = height;
+        this.width = width;
         this.trainee = trainee;
-        init();
+        generationCount = 0;
+        initRandomly();
     }
 
     private EvolutionPath() {
     }
 
-    private void init() {
+    private void initRandomly() {
         population = new NeuralNetwork[populationSize];
-        for (NeuralNetwork n : population) {
-            n = new NeuralNetwork(inputSize, outputSize, layerCount);
+        for (int i = 0; i < populationSize; i++) {
+            population[i] = new NeuralNetwork(outputSize, height, width);
         }
     }
 
-    public void initFromFile(String filename) {
-        NeuralNetwork temp;
-        try {
-            ObjectInputStream input;
-            input = new ObjectInputStream(new FileInputStream(filename));
-            temp = (NeuralNetwork) input.readObject();
-            input.close();
-        } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-
+    public void initFromSeed(NeuralNetwork seed) {
+        createNextGenerationFromParents(new NeuralNetwork[] { seed });
     }
 
     public int getPopulationSize() {
         return populationSize;
+    }
+
+    public int getGenerationCount() {
+        return generationCount;
     }
 
     public double[] runNeuron(int index, double[] input) {
@@ -72,22 +66,22 @@ public class EvolutionPath {
     }
 
     public void runGeneration() {
+        generationCount++;
         for (NeuralNetwork network : population) {
-            double output[] = network.run(trainee.getInputs());
-            network.setFitness(trainee.calculateFitness(output));
+            network.setFitness(trainee.calculateFitness(network));
         }
-        createNextGeneration();
+        createNextGenerationFromParents(getParents());
     }
 
-    private void createNextGeneration() {
+    private NeuralNetwork[] getParents() {
         int geneticDriftCutoff = (int) (populationSize * (1 - genetricDriftFactor));
         int parentCutoff = (int) (selectionFactor * geneticDriftCutoff);
+        parentCutoff = Math.max(parentCutoff, 1);
 
         NeuralNetwork[] parents = new NeuralNetwork[parentCutoff];
-
         // selection sort
         for (int i = 0; i < parents.length; i++) {
-            double maxFitness = Double.MIN_VALUE;
+            double maxFitness = Double.NEGATIVE_INFINITY;
             int maxFitnessIndex = 0;
             for (int j = 0; j < populationSize; j++) {
                 if (population[j] != null && population[j].getFitness() > maxFitness) {
@@ -98,19 +92,27 @@ public class EvolutionPath {
             parents[i] = population[maxFitnessIndex];
             population[maxFitnessIndex] = null;
         }
+        return parents;
+    }
 
-        for (int i = 0; i < geneticDriftCutoff; i++) {
-            int parentIndex = (int) (Math.random() * selectionFactor * geneticDriftCutoff
+    private void createNextGenerationFromParents(NeuralNetwork[] parents) {
+        if (parents.length == 0) {
+            throw new IllegalArgumentException("Input lengthfor createNextGenerationFromParents method is 0");
+        }
+        int geneticDriftCutoff = (int) (populationSize * (1 - genetricDriftFactor));
+        population[0] = parents[0];
+        for (int i = 1; i < geneticDriftCutoff; i++) {
+            int parentIndex = (int) (Math.random() * parents.length
                     * i / geneticDriftCutoff);
             population[i] = parents[parentIndex].mutate(mutationStrength, mutationProbability);
         }
         for (int i = geneticDriftCutoff; i < populationSize; i++) {
-            population[i] = new NeuralNetwork(inputSize, outputSize, layerCount);
+            population[i] = new NeuralNetwork(outputSize, height, width);
         }
     }
 
     public double getMaxFitness() {
-        double maxFitness = Double.MIN_VALUE;
+        double maxFitness = Double.NEGATIVE_INFINITY;
         for (int j = 0; j < populationSize; j++) {
             maxFitness = Math.max(maxFitness, population[j].getFitness());
         }
@@ -118,10 +120,10 @@ public class EvolutionPath {
     }
 
     public NeuralNetwork getBestNetwork() {
-        double maxFitness = Double.MIN_VALUE;
+        double maxFitness = Double.NEGATIVE_INFINITY;
         int maxIndex = 0;
         for (int i = 0; i < populationSize; i++) {
-            if(population[i].getFitness() > maxFitness) {
+            if (population[i].getFitness() > maxFitness) {
                 maxFitness = population[i].getFitness();
                 maxIndex = i;
             }
@@ -133,8 +135,8 @@ public class EvolutionPath {
     public String toString() {
         return "EvolutionPath [mutationStrength=" + mutationStrength + ", mutationProbability=" + mutationProbability
                 + ", selectionFactor=" + selectionFactor + ", genetricDriftFactor=" + genetricDriftFactor
-                + ", populationSize=" + populationSize + ", inputSize=" + inputSize + ", outputSize=" + outputSize
-                + ", layerCount=" + layerCount + "]";
+                + ", populationSize=" + populationSize + ", outputSize=" + outputSize
+                + ", layerCount=" + height + "]";
     }
 
     @Override
@@ -152,9 +154,8 @@ public class EvolutionPath {
         result = prime * result + (int) (temp ^ (temp >>> 32));
         result = prime * result + populationSize;
         result = prime * result + Arrays.hashCode(population);
-        result = prime * result + inputSize;
         result = prime * result + outputSize;
-        result = prime * result + layerCount;
+        result = prime * result + height;
         return result;
     }
 
@@ -179,11 +180,9 @@ public class EvolutionPath {
             return false;
         if (!Arrays.equals(population, other.population))
             return false;
-        if (inputSize != other.inputSize)
-            return false;
         if (outputSize != other.outputSize)
             return false;
-        if (layerCount != other.layerCount)
+        if (height != other.height)
             return false;
         return true;
     }
@@ -196,9 +195,10 @@ public class EvolutionPath {
         clone.selectionFactor = selectionFactor;
         clone.genetricDriftFactor = genetricDriftFactor;
         clone.populationSize = populationSize;
-        clone.inputSize = inputSize;
         clone.outputSize = outputSize;
-        clone.layerCount = layerCount;
+        clone.height = height;
+        clone.width = width;
+        clone.trainee = trainee;
 
         clone.population = new NeuralNetwork[population.length];
         for (int i = 0; i < population.length; i++) {
@@ -240,6 +240,4 @@ public class EvolutionPath {
         this.genetricDriftFactor = genetricDriftFactor;
     }
 
-
-    
 }
