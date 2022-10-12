@@ -12,8 +12,8 @@ public class Trainer {
     private double[] genetricDriftFactor;
 
     private static final int populationSize = 500;
-    private final static double trainDuration = 50; // sec
-    private final static double tuningDuration = 10; // tuning time // sec
+    private final static double trainDuration = 30; // sec
+    private final static double tuningDuration = 3; // tuning time // sec
     private EvolutionPath mainEvolutionPath;
 
     private boolean running;
@@ -24,7 +24,7 @@ public class Trainer {
 
     public Trainer(Trainable trainee, int height, int width) {
         this.mutationStrength = new double[] { .05, 0.1 };
-        this.mutationProbability = new double[] { 0.05, 0.1 };
+        this.mutationProbability = new double[] { 0.002, 0.1 };
         this.selectionFactor = new double[] { 0.01, 0.25 };
         this.genetricDriftFactor = new double[] { 0.5, 0.9 };
         mainEvolutionPath = new EvolutionPath(populationSize, height, width,
@@ -129,7 +129,7 @@ public class Trainer {
         while (running() && System.nanoTime() - startTime <= trainingDuration) {
             mainEvolutionPath.runGeneration();
             System.out.print("Training gen " + mainEvolutionPath.getGenerationCount() + " - Best fitness is: " + mainEvolutionPath.getMaxFitness() + "          \r");
-            // if(mainEvolutionPath.getGenerationCount() % 100 == 0) {
+            // if(mainEvolutionPath.getGenerationCount() % 1000 == 0) {
             //     System.out.println(mainEvolutionPath.getBestNetwork());
             // }
         }

@@ -22,7 +22,7 @@ public class NeuralNetwork {
     }
 
     private void initWeights(int inputSize) {
-        if(inputSize <= 0) {
+        if (inputSize <= 0) {
             throw new IllegalArgumentException("Input size to inputSize function is invalid: " + inputSize);
         }
         this.inputSize = inputSize;
@@ -60,13 +60,14 @@ public class NeuralNetwork {
     }
 
     public double[] run(double[] input) {
-        if(input.length == 0) {
+        if (input.length == 0) {
             throw new IllegalArgumentException("Input length for run function is 0");
         }
         if (middleWeights == null) {
             initWeights(input.length);
         } else if (input.length != inputSize) {
-            throw new IllegalArgumentException("invalid input length: " + input.length + " when supposed to be: " + inputSize);
+            throw new IllegalArgumentException(
+                    "invalid input length: " + input.length + " when supposed to be: " + inputSize);
         }
         double[] activations = Arrays.copyOf(input, input.length);
         for (double[][] layerWeights : middleWeights) {
@@ -79,10 +80,10 @@ public class NeuralNetwork {
                         temp[i] += layerWeights[i][j];
                     } else {
                         temp[i] += activations[j] * layerWeights[i][j];
-                        temp[i] = Math.max(temp[i], 0); // activation function
                     }
 
                 }
+                temp[i] = Math.max(temp[i], 0); // activation function
             }
             activations = temp;
         }
@@ -114,7 +115,7 @@ public class NeuralNetwork {
                 }
             }
         }
-        if(clone == null) {
+        if (clone == null) {
             System.out.println("mutate output null");
         }
         return clone;
@@ -140,8 +141,7 @@ public class NeuralNetwork {
             for (int layerIndex = 0; layerIndex < middleWeights.length; layerIndex++) {
                 for (int i = 0; i < middleWeights[layerIndex].length; i++) {
 
-                    clone.middleWeights[layerIndex][i] = 
-                    Arrays.copyOf(middleWeights[layerIndex][i],
+                    clone.middleWeights[layerIndex][i] = Arrays.copyOf(middleWeights[layerIndex][i],
                             middleWeights[layerIndex][i].length);
                 }
             }
@@ -157,9 +157,113 @@ public class NeuralNetwork {
 
     @Override
     public String toString() {
-        return "NeuralNetwork [inputSize=" + inputSize + ", outputSize=" + outputSize + ", middleLayers=" + midHeight
-                + ", middleWeights=" + Arrays.toString(middleWeights) + ", outputWeights="
-                + Arrays.toString(outputWeights) + ", fitness=" + fitness + "]";
+        StringBuffer output = new StringBuffer(
+                "NeuralNetwork [inputSize=" + inputSize + ", outputSize=" + outputSize + ", midHeight=" + midHeight
+                        + ", width=" + width + ", fitness=" + fitness + ", minWeight=" + minWeight + ", maxWeight="
+                        + maxWeight + ", middleWeights=\n");
+        for (int layer = 0; layer < middleWeights.length; layer++) {
+            for (int i = 0; i < middleWeights[layer].length; i++) {
+                output.append("[");
+                for (int j = 0; j < middleWeights[layer][i].length; j++) {
+                    output.append(Math.round(middleWeights[layer][i][j] * 1000) / 1000.0);
+                    if (j != middleWeights[layer][i].length - 1) {
+                        output.append(", ");
+                    }
+                }
+                output.append("]");
+                if (i != middleWeights[layer].length - 1) {
+                    output.append(",    ");
+                }
+            }
+            output.append("\n\n");
+        }
+        output.append("outputWeights =\n");
+        for (int i = 0; i < outputWeights.length; i++) {
+            output.append("[");
+            for (int j = 0; j < outputWeights[i].length; j++) {
+                output.append(Math.round(outputWeights[i][j] * 1000) / 1000.0);
+                if (j != outputWeights[i].length - 1) {
+                    output.append(", ");
+                }
+            }
+            output.append("]");
+            if (i != middleWeights.length - 1) {
+                output.append(",    ");
+            }
+        }
+        return output.toString();
+    }
+
+    public String toString(double[] input) {
+        if (input.length == 0) {
+            throw new IllegalArgumentException("Input length for run function is 0");
+        }
+        if (middleWeights == null) {
+            initWeights(input.length);
+        } else if (input.length != inputSize) {
+            throw new IllegalArgumentException(
+                    "invalid input length: " + input.length + " when supposed to be: " + inputSize);
+        }
+        StringBuffer output = new StringBuffer(
+                "NeuralNetwork [inputSize=" + inputSize + ", outputSize=" + outputSize + ", midHeight=" + midHeight
+                        + ", width=" + width + ", fitness=" + fitness + ", minWeight=" + minWeight + ", maxWeight="
+                        + maxWeight + ", layers=\n\n");
+
+        double[] activations = Arrays.copyOf(input, input.length);
+
+        output.append("[");
+        for (int i = 0; i < input.length; i++) {
+            output.append(Math.round(input[i] * 1000) / 1000.0);
+            if (i != input.length - 1) {
+                output.append(", ");
+            }
+        }
+        output.append("] \n\n");
+
+        for (double[][] layerWeights : middleWeights) {
+
+            double[] temp = new double[layerWeights.length];
+            for (int i = 0; i < layerWeights.length; i++) {
+                for (int j = 0; j < layerWeights[i].length; j++) {
+
+                    if (j == layerWeights[i].length - 1) { // bias
+                        temp[i] += layerWeights[i][j];
+                    } else {
+                        temp[i] += activations[j] * layerWeights[i][j];
+                    }
+
+                }
+                temp[i] = Math.max(temp[i], 0); // activation function
+            }
+            output.append("[");
+            for (int i = 0; i < temp.length; i++) {
+                output.append(Math.round(temp[i] * 1000) / 1000.0);
+                if (i != temp.length - 1) {
+                    output.append(", ");
+                }
+            }
+            output.append("] \n\n");
+            activations = temp;
+        }
+        double[] outputActivations = new double[outputSize];
+        for (int i = 0; i < outputSize; i++) {
+            for (int j = 0; j <= activations.length; j++) {
+                if (j == activations.length) {
+                    outputActivations[i] += outputWeights[i][j];
+                } else {
+                    outputActivations[i] += activations[j] * outputWeights[i][j];
+                }
+            }
+        }
+        output.append("[");
+        for (int i = 0; i < outputActivations.length; i++) {
+            output.append(Math.round(outputActivations[i] * 1000) / 1000.0);
+            if (i != outputActivations.length - 1) {
+                output.append(", ");
+            }
+        }
+        output.append("]");
+        return output.toString();
     }
 
     @Override

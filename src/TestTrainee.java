@@ -1,3 +1,5 @@
+import java.util.HashSet;
+
 public class TestTrainee implements Trainable {
     private double[] inputs;
     private double[] expectedOutput;
@@ -12,9 +14,14 @@ public class TestTrainee implements Trainable {
     @Override
     public double calculateFitness(NeuralNetwork nn) {
         double fitness = 0;
+        HashSet<Double> seen = new HashSet<>();
         for (int i = 0; i < inputs.length; i++) {
-            double output = nn.run(new double[]{inputs[i]})[0];
+            double output = nn.run(new double[]{inputs[i]}) [0];
+            if(seen.contains(output)) {
+                fitness -= 100;
+            }
             fitness -= Math.abs(expectedOutput[i] - output);
+            seen.add(output);
         }
         return fitness;
     }
