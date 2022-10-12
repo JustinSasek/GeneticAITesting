@@ -83,7 +83,7 @@ public class NeuralNetwork {
                     }
 
                 }
-                temp[i] = Math.max(temp[i], 0); // activation function
+                // temp[i] = Math.max(temp[i], 0); // activation function
             }
             activations = temp;
         }

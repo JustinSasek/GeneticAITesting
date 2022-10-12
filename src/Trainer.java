@@ -56,9 +56,8 @@ public class Trainer {
                 maxFitness = relMaxfitness;
                 bestPath = tempPath;
             }
-            System.out.print("Tuning mutation strength - Best is: " + bestPath.getMutationStrength() + "          \r");
         }
-        System.out.println();
+        System.out.println("Tuning mutation strength - Best is: " + bestPath.getMutationStrength() + "          \r");
 
         maxFitness = Double.NEGATIVE_INFINITY;
         for (double mp = mutationProbability[0]; running && mp <= mutationProbability[1]; mp += (mutationProbability[1]
@@ -75,9 +74,8 @@ public class Trainer {
                 maxFitness = relMaxfitness;
                 bestPath = tempPath;
             }
-            System.out.print("Tuning mutation prob - Best is: " + bestPath.getMutationProbability() + "          \r");
         }
-        System.out.println();
+        System.out.println("Tuning mutation prob - Best is: " + bestPath.getMutationProbability());
 
         maxFitness = Double.NEGATIVE_INFINITY;
         for (double sf = selectionFactor[0]; running && sf <= selectionFactor[1]; sf += (selectionFactor[1]
@@ -94,9 +92,8 @@ public class Trainer {
                 maxFitness = relMaxfitness;
                 bestPath = tempPath;
             }
-            System.out.print("Tuning selection factor - Best is: " + bestPath.getSelectionFactor() + "          \r");
         }
-        System.out.println();
+        System.out.println("Tuning selection factor - Best is: " + bestPath.getSelectionFactor());
 
         maxFitness = Double.NEGATIVE_INFINITY;
         for (double gd = genetricDriftFactor[0]; running && gd <= genetricDriftFactor[1]; gd += (genetricDriftFactor[1]
@@ -113,9 +110,8 @@ public class Trainer {
                 maxFitness = relMaxfitness;
                 bestPath = tempPath;
             }
-            System.out.print("Tuning genetic drift - Best is: " + bestPath.getGenetricDriftFactor() + "          \r");
         }
-        System.out.println();
+        System.out.println("Tuning genetic drift - Best is: " + bestPath.getGenetricDriftFactor());
 
         if (maxFitness > mainEvolutionPath.getMaxFitness()) {
             mainEvolutionPath = bestPath;
@@ -128,10 +124,10 @@ public class Trainer {
         long startTime = System.nanoTime();
         while (running() && System.nanoTime() - startTime <= trainingDuration) {
             mainEvolutionPath.runGeneration();
-            System.out.print("Training gen " + mainEvolutionPath.getGenerationCount() + " - Best fitness is: " + mainEvolutionPath.getMaxFitness() + "          \r");
-            // if(mainEvolutionPath.getGenerationCount() % 1000 == 0) {
-            //     System.out.println(mainEvolutionPath.getBestNetwork());
-            // }
+            if(mainEvolutionPath.getGenerationCount() % 100 == 0) {
+                System.out.print("Training gen " + mainEvolutionPath.getGenerationCount() + " - Best fitness is: " + mainEvolutionPath.getMaxFitness() + "          \r");
+                // System.out.println(mainEvolutionPath.getBestNetwork());
+            }
         }
         System.out.println();
     }
