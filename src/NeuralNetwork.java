@@ -7,7 +7,6 @@ public class NeuralNetwork {
     private int width;
     private double[][][] middleWeights;
     private boolean[][] middleDropouts;
-    private double[][] outputWeights;
     private double dropoutFactor;
     private double fitness;
     private static double maxWeight = 1;
@@ -33,10 +32,10 @@ public class NeuralNetwork {
         if (width == -1) {
             width = Math.max(inputSize, 5);
         }
-        middleWeights = new double[midHeight][width][width + 1];
+        middleWeights = new double[midHeight + 1][width][width + 1];
         middleWeights[0] = new double[width][inputSize + 1];
-        middleDropouts = new boolean[midHeight][width];
-        outputWeights = new double[outputSize][width + 1];
+        middleWeights[midHeight] = new double[outputSize][width + 1];
+        middleDropouts = new boolean[midHeight + 1][width];
     }
 
     public static NeuralNetwork loadFromFile(String filename) {
@@ -53,11 +52,6 @@ public class NeuralNetwork {
                 for (int weightIndex = 0; weightIndex < nueronWeights.length; weightIndex++) {
                     nueronWeights[weightIndex] = Math.random() * (maxWeight - minWeight) - minWeight;
                 }
-            }
-        }
-        for (double[] nueronWeights : outputWeights) {
-            for (int weightIndex = 0; weightIndex < nueronWeights.length; weightIndex++) {
-                nueronWeights[weightIndex] = Math.random() * (maxWeight - minWeight) - minWeight;
             }
         }
     }
@@ -109,6 +103,7 @@ public class NeuralNetwork {
 
                     if (!(dropouts && layerIndex != 0 && middleDropouts[layerIndex - 1][j])) {
                             temp[i] += activations[j] * layerWeights[i][j];
+                            
                             count ++;
                     } 
 
@@ -119,17 +114,7 @@ public class NeuralNetwork {
             }
             activations = temp;
         }
-        double[] output = new double[outputSize];
-        for (int i = 0; i < outputSize; i++) {
-            for (int j = 0; j <= activations.length; j++) {
-                if (j == activations.length) {
-                    output[i] += outputWeights[i][j];
-                } else {
-                    output[i] += activations[j] * outputWeights[i][j];
-                }
-            }
-        }
-        return output;
+        return activations;
     }
 
     public NeuralNetwork mutate(double strength, double probability) {
@@ -183,11 +168,6 @@ public class NeuralNetwork {
             }
         }
 
-        if (outputWeights != null) {
-            for (int i = 0; i < outputSize; i++) {
-                clone.outputWeights[i] = Arrays.copyOf(outputWeights[i], outputWeights[i].length);
-            }
-        }
         return clone;
     }
 
@@ -212,20 +192,6 @@ public class NeuralNetwork {
                 }
             }
             output.append("\n\n");
-        }
-        output.append("outputWeights =\n");
-        for (int i = 0; i < outputWeights.length; i++) {
-            output.append("[");
-            for (int j = 0; j < outputWeights[i].length; j++) {
-                output.append(Math.round(outputWeights[i][j] * 1000) / 1000.0);
-                if (j != outputWeights[i].length - 1) {
-                    output.append(", ");
-                }
-            }
-            output.append("]");
-            if (i != middleWeights.length - 1) {
-                output.append(",    ");
-            }
         }
         return output.toString();
     }
@@ -283,24 +249,6 @@ public class NeuralNetwork {
             output.append("] \n\n");
             activations = temp;
         }
-        double[] outputActivations = new double[outputSize];
-        for (int i = 0; i < outputSize; i++) {
-            for (int j = 0; j <= activations.length; j++) {
-                if (j == activations.length) {
-                    outputActivations[i] += outputWeights[i][j];
-                } else {
-                    outputActivations[i] += activations[j] * outputWeights[i][j];
-                }
-            }
-        }
-        output.append("[");
-        for (int i = 0; i < outputActivations.length; i++) {
-            output.append(Math.round(outputActivations[i] * 1000) / 1000.0);
-            if (i != outputActivations.length - 1) {
-                output.append(", ");
-            }
-        }
-        output.append("]");
         return output.toString();
     }
 
@@ -312,7 +260,6 @@ public class NeuralNetwork {
         result = prime * result + outputSize;
         result = prime * result + midHeight;
         result = prime * result + Arrays.deepHashCode(middleWeights);
-        result = prime * result + Arrays.deepHashCode(outputWeights);
         long temp;
         temp = Double.doubleToLongBits(fitness);
         result = prime * result + (int) (temp ^ (temp >>> 32));
@@ -335,8 +282,6 @@ public class NeuralNetwork {
         if (midHeight != other.midHeight)
             return false;
         if (!Arrays.deepEquals(middleWeights, other.middleWeights))
-            return false;
-        if (!Arrays.deepEquals(outputWeights, other.outputWeights))
             return false;
         if (Double.doubleToLongBits(fitness) != Double.doubleToLongBits(other.fitness))
             return false;
