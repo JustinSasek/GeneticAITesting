@@ -5,7 +5,6 @@ public class Client {
         Trainer trainer = new Trainer(trainee, 5, 10);
         trainer.run();
         NeuralNetwork output = trainer.getBestNetwork();
-        System.out.println("Trainer finished - Max Fitness = " + output.getFitness());
         double[] vals = new double[]{1, 12, 3.5, 4, 5, 3, 7, 8, 9, 10};
         System.out.println(output);
         for (int i = 0; i < vals.length; i++) {

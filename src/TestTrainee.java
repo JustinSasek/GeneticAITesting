@@ -16,7 +16,7 @@ public class TestTrainee implements Trainable {
         double fitness = 0;
         HashSet<Double> seen = new HashSet<>();
         for (int i = 0; i < inputs.length; i++) {
-            double output = nn.run(new double[]{inputs[i]}) [0];
+            double output = nn.runWithDropouts(new double[]{inputs[i]}) [0];
             if(seen.contains(output)) {
                 fitness -= 100;
             }

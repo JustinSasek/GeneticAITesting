@@ -6,15 +6,18 @@ public class NeuralNetwork {
     private int midHeight;
     private int width;
     private double[][][] middleWeights;
+    private boolean[][] middleDropouts;
     private double[][] outputWeights;
+    private double dropoutFactor;
     private double fitness;
     private static double maxWeight = 1;
     private static double minWeight = -1;
 
-    public NeuralNetwork(int outputSize, int height, int width) {
+    public NeuralNetwork(int outputSize, int height, int width, double dropoutFactor) {
         this.outputSize = outputSize;
         this.midHeight = height - 2;
         this.width = width;
+        this.dropoutFactor = dropoutFactor;
         fitness = Double.NEGATIVE_INFINITY;
     }
 
@@ -32,8 +35,8 @@ public class NeuralNetwork {
         }
         middleWeights = new double[midHeight][width][width + 1];
         middleWeights[0] = new double[width][inputSize + 1];
+        middleDropouts = new boolean[midHeight][width];
         outputWeights = new double[outputSize][width + 1];
-        generateRandomWeights();
     }
 
     public static NeuralNetwork loadFromFile(String filename) {
@@ -59,31 +62,60 @@ public class NeuralNetwork {
         }
     }
 
+    private void selectDropouts() {
+        for (boolean[] layerDropouts : middleDropouts) {
+            Arrays.fill(layerDropouts, false);
+            int need = (int) (layerDropouts.length * dropoutFactor);
+            need = Math.max(need, 1);
+            for (int i = 0; i < layerDropouts.length; i++) {
+                if (Math.random() < (double) need / (layerDropouts.length - i)) {
+                    layerDropouts[i] = true;
+                    need--;
+                }
+            }
+        }
+    }
+
     public double[] run(double[] input) {
+        return run(input, true);
+    }
+
+    public double[] runWithDropouts(double[] input) {
+        return run(input, true);
+    }
+
+    private double[] run(double[] input, boolean dropouts) {
         if (input.length == 0) {
             throw new IllegalArgumentException("Input length for run function is 0");
         }
         if (middleWeights == null) {
             initWeights(input.length);
+            generateRandomWeights();
+            selectDropouts();
         } else if (input.length != inputSize) {
             throw new IllegalArgumentException(
                     "invalid input length: " + input.length + " when supposed to be: " + inputSize);
         }
         double[] activations = Arrays.copyOf(input, input.length);
-        for (double[][] layerWeights : middleWeights) {
-
+        for (int layerIndex = 0; layerIndex < middleWeights.length; layerIndex++) {
+            double[][] layerWeights = middleWeights[layerIndex];
             double[] temp = new double[layerWeights.length];
             for (int i = 0; i < layerWeights.length; i++) {
-                for (int j = 0; j < layerWeights[i].length; j++) {
+                if (dropouts && middleDropouts[layerIndex][i]) {
+                    continue;
+                }
+                int count = 0;
+                for (int j = 0; j < layerWeights[i].length - 1; j++) {
 
-                    if (j == layerWeights[i].length - 1) { // bias
-                        temp[i] += layerWeights[i][j];
-                    } else {
-                        temp[i] += activations[j] * layerWeights[i][j];
-                    }
+                    if (!(dropouts && layerIndex != 0 && middleDropouts[layerIndex - 1][j])) {
+                            temp[i] += activations[j] * layerWeights[i][j];
+                            count ++;
+                    } 
 
                 }
-                // temp[i] = Math.max(temp[i], 0); // activation function
+                temp[i] *= (layerWeights[i].length - 1) / count;
+                temp[i] += layerWeights[i][layerWeights[i].length-1];
+                temp[i] = Math.max(temp[i], 0); // activation function
             }
             activations = temp;
         }
@@ -103,20 +135,23 @@ public class NeuralNetwork {
     public NeuralNetwork mutate(double strength, double probability) {
         NeuralNetwork clone = clone();
         if (middleWeights != null) {
-            for (double[][] layerWeights : clone.middleWeights) {
-                for (double[] nueronWeights : layerWeights) {
-                    for (int weightIndex = 0; weightIndex < nueronWeights.length; weightIndex++) {
-                        if (Math.random() < probability) {
-                            nueronWeights[weightIndex] += strength * (2 * Math.random() - 1);
-                            maxWeight = Math.max(maxWeight, nueronWeights[weightIndex]);
-                            minWeight = Math.min(minWeight, nueronWeights[weightIndex]);
+            for (int layerIndex = 0; layerIndex < clone.middleWeights.length; layerIndex++) {
+                for (int i = 0; i < clone.middleWeights[layerIndex].length; i++) {
+                    double[] nueronWeights = clone.middleWeights[layerIndex][i];
+                    for (int j = 0; j < nueronWeights.length; j++) {
+                        if (j == nueronWeights.length - 1 || !middleDropouts[layerIndex][j]) {
+                            if (Math.random() < probability) {
+                                nueronWeights[j] += strength * (2 * Math.random() - 1);
+                                maxWeight = Math.max(maxWeight, nueronWeights[j]);
+                                minWeight = Math.min(minWeight, nueronWeights[j]);
+                            }
                         }
                     }
                 }
             }
         }
         if (clone == null) {
-            System.out.println("mutate output null");
+            System.err.println("mutate output null");
         }
         return clone;
     }
@@ -135,12 +170,13 @@ public class NeuralNetwork {
         clone.midHeight = midHeight;
         clone.width = width;
         clone.fitness = fitness;
+        clone.dropoutFactor = dropoutFactor;
 
         if (middleWeights != null) {
             clone.initWeights(inputSize);
+            selectDropouts();
             for (int layerIndex = 0; layerIndex < middleWeights.length; layerIndex++) {
                 for (int i = 0; i < middleWeights[layerIndex].length; i++) {
-
                     clone.middleWeights[layerIndex][i] = Arrays.copyOf(middleWeights[layerIndex][i],
                             middleWeights[layerIndex][i].length);
                 }
@@ -200,6 +236,8 @@ public class NeuralNetwork {
         }
         if (middleWeights == null) {
             initWeights(input.length);
+            generateRandomWeights();
+            selectDropouts();
         } else if (input.length != inputSize) {
             throw new IllegalArgumentException(
                     "invalid input length: " + input.length + " when supposed to be: " + inputSize);

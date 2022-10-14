@@ -10,26 +10,29 @@ public class EvolutionPath {
     private int outputSize;
     private int height;
     private int width;
+    private double dropoutFactor;
     private Trainable trainee;
     private int generationCount;
 
-    public EvolutionPath(int populationSize, int height, int width, Trainable trainee,
+    public EvolutionPath(int populationSize, int height, int width, double dropoutFactor, Trainable trainee,
             NeuralNetwork seed) {
 
         this.outputSize = trainee.getOutputSize();
         this.height = height;
         this.width = width;
+        this.dropoutFactor = dropoutFactor;
         this.trainee = trainee;
         generationCount = 0;
         initFromSeed(seed);
 
     }
 
-    public EvolutionPath(int populationSize, int height, int width, Trainable trainee) {
+    public EvolutionPath(int populationSize, int height, int width, double dropoutFactor, Trainable trainee) {
         this.populationSize = populationSize;
         this.outputSize = trainee.getOutputSize();
         this.height = height;
         this.width = width;
+        this.dropoutFactor = dropoutFactor;
         this.trainee = trainee;
         generationCount = 0;
         initRandomly();
@@ -41,7 +44,7 @@ public class EvolutionPath {
     private void initRandomly() {
         population = new NeuralNetwork[populationSize];
         for (int i = 0; i < populationSize; i++) {
-            population[i] = new NeuralNetwork(outputSize, height, width);
+            population[i] = new NeuralNetwork(outputSize, height, width, dropoutFactor);
         }
     }
 
@@ -57,9 +60,9 @@ public class EvolutionPath {
         return generationCount;
     }
 
-    public double[] runNeuron(int index, double[] input) {
-        return population[index].run(input);
-    }
+    // private double[] runNeuron(int index, double[] input) {
+    //     return population[index].runWithDropouts(input);
+    // }
 
     public void setFitness(int index, double fitness) {
         population[index].setFitness(fitness);
@@ -100,14 +103,14 @@ public class EvolutionPath {
             throw new IllegalArgumentException("Input lengthfor createNextGenerationFromParents method is 0");
         }
         int geneticDriftCutoff = (int) (populationSize * (1 - genetricDriftFactor));
-        population[0] = parents[0];
+        population[0] = parents[0].clone();
         for (int i = 1; i < geneticDriftCutoff; i++) {
             int parentIndex = (int) (Math.random() * parents.length
                     * i / geneticDriftCutoff);
             population[i] = parents[parentIndex].mutate(mutationStrength, mutationProbability);
         }
         for (int i = geneticDriftCutoff; i < populationSize; i++) {
-            population[i] = new NeuralNetwork(outputSize, height, width);
+            population[i] = new NeuralNetwork(outputSize, height, width, dropoutFactor);
         }
     }
 
@@ -199,6 +202,7 @@ public class EvolutionPath {
         clone.height = height;
         clone.width = width;
         clone.trainee = trainee;
+        clone.generationCount = generationCount;
 
         clone.population = new NeuralNetwork[population.length];
         for (int i = 0; i < population.length; i++) {

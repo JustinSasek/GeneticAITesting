@@ -11,9 +11,10 @@ public class Trainer {
 
     private double[] genetricDriftFactor;
 
+    private static double dropoutFactor = 0.3;
     private static final int populationSize = 500;
-    private final static double trainDuration = 30; // sec
-    private final static double tuningDuration = 3; // tuning time // sec
+    private final static double trainDuration = 40; // sec
+    private final static double tuningDuration = 20; // tuning time // sec
     private EvolutionPath mainEvolutionPath;
 
     private boolean running;
@@ -23,11 +24,11 @@ public class Trainer {
     }
 
     public Trainer(Trainable trainee, int height, int width) {
-        this.mutationStrength = new double[] { .05, 0.1 };
-        this.mutationProbability = new double[] { 0.002, 0.1 };
+        this.mutationStrength = new double[] { .05, 2 };
+        this.mutationProbability = new double[] { 0.01, 0.1 };
         this.selectionFactor = new double[] { 0.01, 0.25 };
         this.genetricDriftFactor = new double[] { 0.5, 0.9 };
-        mainEvolutionPath = new EvolutionPath(populationSize, height, width,
+        mainEvolutionPath = new EvolutionPath(populationSize, height, width, dropoutFactor,
                 trainee);
     }
 
@@ -38,7 +39,7 @@ public class Trainer {
         mainEvolutionPath.setSelectionFactor((selectionFactor[1] - selectionFactor[0]) / 2);
         mainEvolutionPath.setGenetricDriftFactor((genetricDriftFactor[1] - genetricDriftFactor[0]) / 2);
 
-        long pathRuntime =  (long) tuningDuration * 1000000000 / 4 / 20 ;
+        long pathRuntime = (long) tuningDuration * 1000000000 / 4 / 20;
         EvolutionPath bestPath = mainEvolutionPath.clone();
 
         double maxFitness = Double.NEGATIVE_INFINITY;
@@ -57,7 +58,8 @@ public class Trainer {
                 bestPath = tempPath;
             }
         }
-        System.out.println("Tuning mutation strength - Best is: " + bestPath.getMutationStrength() + "          \r");
+        System.out.println("Tuning mutation strength - Best is: "
+                + Math.round(bestPath.getMutationStrength() * 10000) / 10000.0 + "          \r");
 
         maxFitness = Double.NEGATIVE_INFINITY;
         for (double mp = mutationProbability[0]; running && mp <= mutationProbability[1]; mp += (mutationProbability[1]
@@ -75,7 +77,8 @@ public class Trainer {
                 bestPath = tempPath;
             }
         }
-        System.out.println("Tuning mutation prob - Best is: " + bestPath.getMutationProbability());
+        System.out.println(
+                "Tuning mutation prob - Best is: " + Math.round(bestPath.getMutationProbability() * 10000) / 10000.0);
 
         maxFitness = Double.NEGATIVE_INFINITY;
         for (double sf = selectionFactor[0]; running && sf <= selectionFactor[1]; sf += (selectionFactor[1]
@@ -93,7 +96,8 @@ public class Trainer {
                 bestPath = tempPath;
             }
         }
-        System.out.println("Tuning selection factor - Best is: " + bestPath.getSelectionFactor());
+        System.out.println(
+                "Tuning selection factor - Best is: " + Math.round(bestPath.getSelectionFactor() * 10000) / 10000.0);
 
         maxFitness = Double.NEGATIVE_INFINITY;
         for (double gd = genetricDriftFactor[0]; running && gd <= genetricDriftFactor[1]; gd += (genetricDriftFactor[1]
@@ -111,7 +115,8 @@ public class Trainer {
                 bestPath = tempPath;
             }
         }
-        System.out.println("Tuning genetic drift - Best is: " + bestPath.getGenetricDriftFactor());
+        System.out.println(
+                "Tuning genetic drift - Best is: " + Math.round(bestPath.getGenetricDriftFactor() * 10000) / 10000.0);
 
         if (maxFitness > mainEvolutionPath.getMaxFitness()) {
             mainEvolutionPath = bestPath;
@@ -124,8 +129,9 @@ public class Trainer {
         long startTime = System.nanoTime();
         while (running() && System.nanoTime() - startTime <= trainingDuration) {
             mainEvolutionPath.runGeneration();
-            if(mainEvolutionPath.getGenerationCount() % 100 == 0) {
-                System.out.print("Training gen " + mainEvolutionPath.getGenerationCount() + " - Best fitness is: " + mainEvolutionPath.getMaxFitness() + "          \r");
+            if (mainEvolutionPath.getGenerationCount() % 100 == 0) {
+                System.out.print("Training gen " + mainEvolutionPath.getGenerationCount() + " - Best fitness is: "
+                        + Math.round(mainEvolutionPath.getMaxFitness() * 10000) / 10000.0 + "          \r");
                 // System.out.println(mainEvolutionPath.getBestNetwork());
             }
         }
@@ -133,11 +139,21 @@ public class Trainer {
     }
 
     public void run() {
+        long startTime = System.nanoTime();
         running = true;
         while (running) {
             tune();
             train();
         }
+        NeuralNetwork bestNN = mainEvolutionPath.getBestNetwork();
+        int sec = (int) (startTime / 1000000000);
+        int min = sec / 60;
+        int hour = min / 60;
+        System.out.println("Trainer finished after "
+                + hour + ":"
+                + min % 60 + ":"
+                + sec % 60
+                + " - Max Fitness = " + Math.round(bestNN.getFitness() * 10000) / 10000.0);
     }
 
     private boolean running() {
@@ -146,12 +162,11 @@ public class Trainer {
         }
 
         try {
-            if(System.in.available() != 0) {
+            if (System.in.available() != 0) {
                 running = false;
                 return false;
             }
-        } 
-        catch (Exception e) {
+        } catch (Exception e) {
         }
         return true;
     }
