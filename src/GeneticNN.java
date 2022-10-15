@@ -1,6 +1,6 @@
 import java.util.Arrays;
 
-public class NeuralNetwork {
+public class GeneticNN {
     private int inputSize;
     private int outputSize;
     private int midHeight;
@@ -12,7 +12,7 @@ public class NeuralNetwork {
     private static double maxWeight = 1;
     private static double minWeight = -1;
 
-    public NeuralNetwork(int outputSize, int height, int width, double dropoutFactor) {
+    public GeneticNN(int outputSize, int height, int width, double dropoutFactor) {
         this.outputSize = outputSize;
         this.midHeight = height - 2;
         this.width = width;
@@ -20,7 +20,7 @@ public class NeuralNetwork {
         fitness = Double.NEGATIVE_INFINITY;
     }
 
-    private NeuralNetwork() {
+    private GeneticNN() {
     }
 
     private void initWeights(int inputSize) {
@@ -38,11 +38,11 @@ public class NeuralNetwork {
         middleDropouts = new boolean[midHeight + 1][width];
     }
 
-    public static NeuralNetwork loadFromFile(String filename) {
+    public static GeneticNN loadFromFile(String filename) {
         return null;
     }
 
-    public static void saveToFile(NeuralNetwork nn, String filename) {
+    public static void saveToFile(GeneticNN nn, String filename) {
         return;
     }
 
@@ -117,8 +117,8 @@ public class NeuralNetwork {
         return activations;
     }
 
-    public NeuralNetwork mutate(double strength, double probability) {
-        NeuralNetwork clone = clone();
+    public GeneticNN mutate(double strength, double probability) {
+        GeneticNN clone = clone();
         if (middleWeights != null) {
             for (int layerIndex = 0; layerIndex < clone.middleWeights.length; layerIndex++) {
                 for (int i = 0; i < clone.middleWeights[layerIndex].length; i++) {
@@ -149,8 +149,8 @@ public class NeuralNetwork {
         this.fitness = fitness;
     }
 
-    public NeuralNetwork clone() {
-        NeuralNetwork clone = new NeuralNetwork();
+    public GeneticNN clone() {
+        GeneticNN clone = new GeneticNN();
         clone.outputSize = outputSize;
         clone.midHeight = midHeight;
         clone.width = width;
@@ -274,7 +274,7 @@ public class NeuralNetwork {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        NeuralNetwork other = (NeuralNetwork) obj;
+        GeneticNN other = (GeneticNN) obj;
         if (inputSize != other.inputSize)
             return false;
         if (outputSize != other.outputSize)

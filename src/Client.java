@@ -4,7 +4,7 @@ public class Client {
         Trainable trainee = new TestTrainee();
         Trainer trainer = new Trainer(trainee, 5, 10);
         trainer.run();
-        NeuralNetwork output = trainer.getBestNetwork();
+        GeneticNN output = trainer.getBestNetwork();
         double[] vals = new double[]{1, 12, 3.5, 4, 5, 3, 7, 8, 9, 10};
         System.out.println(output);
         for (int i = 0; i < vals.length; i++) {

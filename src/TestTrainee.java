@@ -12,7 +12,7 @@ public class TestTrainee implements Trainable {
     }
 
     @Override
-    public double calculateFitness(NeuralNetwork nn) {
+    public double calculateFitness(GeneticNN nn) {
         double fitness = 0;
         HashSet<Double> seen = new HashSet<>();
         for (int i = 0; i < inputs.length; i++) {

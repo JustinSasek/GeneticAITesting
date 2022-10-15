@@ -145,7 +145,7 @@ public class Trainer {
             tune();
             train();
         }
-        NeuralNetwork bestNN = mainEvolutionPath.getBestNetwork();
+        GeneticNN bestNN = mainEvolutionPath.getBestNetwork();
         int sec = (int) (startTime / 1000000000);
         int min = sec / 60;
         int hour = min / 60;
@@ -171,7 +171,7 @@ public class Trainer {
         return true;
     }
 
-    public NeuralNetwork getBestNetwork() {
+    public GeneticNN getBestNetwork() {
         return mainEvolutionPath.getBestNetwork();
     }
 
